@@ -37,8 +37,7 @@ TBC = lambda theta: hom_rottrans2group((0,1,0), theta+np.pi/2, (1095, 0, 0))
 # D joint is ignored
 TCE = lambda theta: hom_rottrans2group((0,1,0), theta, (1270, 0, 175))
 TEF = lambda theta: hom_rottrans2group((1,0,0), theta, (135, 0, 0))
-print("TODO - gripper frame of reference")
-TFG = hom_rottrans2group((0,1,0),-np.pi/2,(160, 0, 0)) # gripper pose, TODO!!!!
+TFG = hom_rottrans2group((0,1,0),-np.pi/2,(160, 0, 0)) # gripper pose
 # Allowed angle ranges (based on Webots)
 bounds = [
     [-3.13, 3.13],
@@ -65,7 +64,7 @@ def optimize(target, bounds, gamma=1000, delta=1000, a0=0, b0=0, c0=0, e0=0, f0=
     '''gamma: orientation error weight, delta: penalty weight'''
     return scipy.optimize.minimize(lambda x:residual(x,target,gamma)+delta*penalty(*x), x0=(a0, b0, c0, e0, f0), bounds=bounds).x
 
-def visualize(group, name="", arrowl=500):
+def visualize(ax, group, name="", arrowl=500):
     p = [group[0,3], group[1,3], group[2,3]]
     vecs = []
     for i in range(3):
@@ -75,35 +74,52 @@ def visualize(group, name="", arrowl=500):
     if name:
         ax.text(x=p[0],y=p[1],z=p[2],s=name)
 
-# TODO: https://matplotlib.org/stable/gallery/widgets/slider_demo.html
-
-if __name__ == "__main__":
-
+def visualize_config(a,b,c,e,f,target=None,name=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-
-    target = hom_rottrans2group((0, 0, 1), np.pi/4, (2000, 500, 75))
-    a,b,c,e,f = optimize(target, bounds, delta=0)
-    print(a,b,c,e,f)
-
-    visualize(target, "{target}")
+    if target is not None:
+        visualize(ax, target, "{target}")
     T0Aa = T0A(a)
-    visualize(T0Aa, "{A}")
+    visualize(ax, T0Aa, "{A}")
     T0Bab = T0Aa @ TAB(b)
-    visualize(T0Bab, "{B}")
+    visualize(ax, T0Bab, "{B}")
     T0Cabc = T0Bab @ TBC(c)
-    visualize(T0Cabc, "{C}")
+    visualize(ax, T0Cabc, "{C}")
     T0Eabce = T0Cabc @ TCE(e)
-    visualize(T0Eabce, "{E}")
+    visualize(ax, T0Eabce, "{E}")
     T0Fabce = T0Eabce @ TEF(f)
-    visualize(T0Fabce, "{F}")
+    visualize(ax, T0Fabce, "{F}")
     T0Gabce = T0Fabce @ TFG
-    visualize(T0Gabce, "{gripper}")
-
-    ax.set_xlim(-2000, 2000)
+    visualize(ax, T0Gabce, "{gripper}")
+    ax.set_xlim(-1000, 2000)
     ax.set_ylim(-2000, 2000)
     ax.set_zlim(0, 2000)
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_zlabel('z')
+    plt.tight_layout()
+    plt.savefig(name+".png")
     plt.show()
+
+# TODO: https://matplotlib.org/stable/gallery/widgets/slider_demo.html
+
+if __name__ == "__main__":
+
+
+    print("FK in zero configuration: ", forward_kinematics(0,0,0,0,0))
+    visualize_config(0,0,0,0,0,None,"Zero configuration")
+
+    target = hom_rottrans2group((0, 0, 1), 0.785398, (1752, -299, 1000))
+    a,b,c,e,f = optimize(target, bounds, delta=0)
+    print("Approach object: ",a,b,c,e,f)
+    visualize_config(a,b,c,e,f,target,"Approach object")
+
+    target = hom_rottrans2group((0, 0, 1), 0.785398, (1752, -299, 790))
+    a,b,c,e,f = optimize(target, bounds, delta=0)
+    print("Grasp object: ",a,b,c,e,f)
+    visualize_config(a,b,c,e,f,target,"Grasp object")
+
+    target = hom_rottrans2group((0, 0, 1), 0, (1590, 720, 1400)) # end-effector in zero configuration
+    a,b,c,e,f = optimize(target, bounds, delta=0)
+    print("Throw object: ",a,b,c,e,f)
+    visualize_config(a,b,c,e,f,target,"Throw object")

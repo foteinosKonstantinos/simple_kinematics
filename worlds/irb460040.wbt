@@ -1,0 +1,55 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/FormedConcrete.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/abb/irb/protos/Irb4600-40.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/devices/robotiq/protos/Robotiq2f140Gripper.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/solids/protos/SolidBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/factory/containers/protos/PlasticCrate.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.3816739588272177 -0.18066474645399758 0.9064685535317107 3.952235038630115
+  position 2.883115885814128 2.0905191983495497 3.660928533835007
+}
+TexturedBackgroundLight {
+}
+Floor {
+  appearance FormedConcrete {
+  }
+}
+Table {
+  translation 1.65 0 0
+}
+PlasticCrate {
+  translation 1.59 0.72 0.74
+  size 0.3 0.3 0.3
+  color 0.466667 0.462745 0.482353
+}
+SolidBox {
+  translation 1.7525 -0.299031 0.79
+  rotation 0 0 1 0.785398
+  size 0.1 0.1 0.1
+  appearance PBRAppearance {
+    baseColor 0.101961 0.372549 0.705882
+    roughness 0.5
+    metalness 0
+  }
+  physics Physics {
+    mass 0.01
+  }
+}
+Irb4600-40 {
+  controller "irb_custom_controller"
+  color 1 1 1
+  handSlot [
+    Robotiq2f140Gripper {
+      translation 0 0 -0.05
+      rotation 0 0 1 1.5708
+    }
+  ]
+  staticBase TRUE
+}
