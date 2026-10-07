@@ -13,7 +13,7 @@ def rot_vec2algebra(x, y, z):
     return np.asmatrix(f"[0 {-z} {y}; {z} 0 {-x}; {-y} {x} 0]")
 
 def rot_vec2group(x, y, z):
-    '''so(3) --> SO(3)'''
+    '''R^3 --> SO(3)'''
     return scipy.linalg.expm(rot_vec2algebra(x, y, z))
 
 def hom_rottrans2group(axis, theta, origin):
@@ -23,18 +23,22 @@ def hom_rottrans2group(axis, theta, origin):
     return np.asmatrix(f"[{rot[0,0]} {rot[0,1]} {rot[0,2]} {origin[0]};{rot[1,0]} {rot[1,1]} {rot[1,2]} {origin[1]};{rot[2,0]} {rot[2,1]} {rot[2,2]} {origin[2]};0 0 0 1]")
 
 # IRB 4600/40 without the D joint and approximating the distance of A joint with 20 cm, all values are in mm (!)
+# with ROBOTIQ 2F-140 Gripper for end-effector
 # Joint name convention: https://www.cyberbotics.com/doc/guide/irb4600-40?version=R2019b-rev1
 # https://library.e.abb.com/public/2de81585a37949b4b1a6b43aaeb79ee3/3HAC032885%20PS%20IRB%204600%20on%20IRC5-en.pdf?x-sign=kEq3EeWxvzlh6yILHMf2ycZTVMQb2VFNue2pEezMygnvEPOM3FiDgij0tbUd4tYR#page=11.23
+# https://assets.robotiq.com/website-assets/support_documents/document/online/2F-85_2F-140_TM_InstructionManual_HTML5_20190503.zip/2F-85_2F-140_TM_InstructionManual_HTML5/Content/6.%20Specifications.htm
 
 # Homogeneous transformations
 
 # All joints are revolute
 T0A = lambda theta: hom_rottrans2group((0,0,1), theta, (0, 0, 200))
-TAB = lambda theta: hom_rottrans2group((0,1,0), theta-np.pi/2, (175, 0, 495))
+TAB = lambda theta: hom_rottrans2group((0,1,0), theta-np.pi/2, (175, 0, 495-200))
 TBC = lambda theta: hom_rottrans2group((0,1,0), theta+np.pi/2, (1095, 0, 0))
 # D joint is ignored
-TCE = lambda theta: hom_rottrans2group((0,1,0), theta, (1270, 0, 0))
+TCE = lambda theta: hom_rottrans2group((0,1,0), theta, (1270, 0, 175))
 TEF = lambda theta: hom_rottrans2group((1,0,0), theta, (135, 0, 0))
+print("TODO - gripper frame of reference")
+TFG = hom_rottrans2group((0,1,0),-np.pi/2,(160, 0, 0)) # gripper pose, TODO!!!!
 # Allowed angle ranges (based on Webots)
 bounds = [
     [-3.13, 3.13],
@@ -46,7 +50,7 @@ bounds = [
 ]
 
 def forward_kinematics(a,b,c,e,f):
-    return T0A(a) @ TAB(b) @ TBC(c) @ TCE(e) @ TEF(f)
+    return T0A(a) @ TAB(b) @ TBC(c) @ TCE(e) @ TEF(f) @ TFG
 
 def residual(abcef,target,gamma=1000):
     '''gamma: orientation error weight'''
@@ -78,8 +82,9 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    target = hom_rottrans2group((0, 0, 0), 0, (2000, 200, 1000))
-    a,b,c,e,f = optimize(target, bounds)
+    target = hom_rottrans2group((0, 0, 1), np.pi/4, (2000, 500, 75))
+    a,b,c,e,f = optimize(target, bounds, delta=0)
+    print(a,b,c,e,f)
 
     visualize(target, "{target}")
     T0Aa = T0A(a)
@@ -92,6 +97,8 @@ if __name__ == "__main__":
     visualize(T0Eabce, "{E}")
     T0Fabce = T0Eabce @ TEF(f)
     visualize(T0Fabce, "{F}")
+    T0Gabce = T0Fabce @ TFG
+    visualize(T0Gabce, "{gripper}")
 
     ax.set_xlim(-2000, 2000)
     ax.set_ylim(-2000, 2000)
