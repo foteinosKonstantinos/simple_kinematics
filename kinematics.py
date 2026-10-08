@@ -105,7 +105,6 @@ def visualize_config(a,b,c,e,f,target=None,name=None):
 
 if __name__ == "__main__":
 
-
     print("FK in zero configuration: ", forward_kinematics(0,0,0,0,0))
     visualize_config(0,0,0,0,0,None,"Zero configuration")
 
